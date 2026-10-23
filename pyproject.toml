@@ -1,0 +1,86 @@
+[project]
+name = "instaflow-backend"
+version = "0.1.0"
+description = "InstaFlow: Instagram comment automation backend (FastAPI)"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "alembic>=1.20.1",
+    "argon2-cffi>=25.1.0",
+    "asyncpg>=0.32.0",
+    "celery>=5.6.3",
+    "cryptography>=50.0.2",
+    "email-validator>=2.3.0",
+    "fastapi>=0.159.1",
+    "httpx>=0.28.1",
+    "pydantic>=2.14.1",
+    "pydantic-settings>=2.16.1",
+    "pyjwt>=2.15.1",
+    "redis>=8.1.0",
+    "sqlalchemy[asyncio]>=2.1.6",
+    "uvicorn[standard]>=0.54.0",
+]
+
+[dependency-groups]
+dev = [
+    "aiosqlite>=0.22.1",
+    "fakeredis>=2.40.0",
+    "lupa>=2.8",
+    "mypy>=2.4.0",
+    "pgserver>=0.1.4",
+    "pytest>=9.1.1",
+    "pytest-asyncio>=1.4.0",
+    "ruff>=0.17.1",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "session"
+asyncio_default_test_loop_scope = "session"
+addopts = "-ra --strict-markers"
+filterwarnings = ["ignore::DeprecationWarning:celery.*", "ignore::DeprecationWarning:kombu.*"]
+
+[tool.ruff]
+line-length = 120
+target-version = "py312"
+extend-exclude = [".venv"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP", "S", "ASYNC", "BLE", "C4", "SIM", "RUF", "PL", "PT"]
+ignore = [
+  "PLR0913", "PLR2004", "PLR0911", "PLR0912", "PLR0915",  # complexity heuristics
+  "S101",      # assert is used for invariants and in tests
+  "B008",      # FastAPI Depends() in defaults
+  "RUF012",
+  "PLC0415",
+  "PLR0917",   # FastAPI handlers take many injected parameters
+  "PLW0603",   # explicit, documented process-wide singletons (engine, redis, adapters)
+  "S105",      # false positives on enum/URL names containing "token"
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["S106", "S107", "S311", "PLR2004", "ARG", "PT018", "RUF001"]
+"alembic/versions/*" = ["E501", "UP", "I", "W291"]
+"scripts/*" = ["S608", "T201"]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+plugins = ["pydantic.mypy"]
+warn_unreachable = true
+exclude = ["alembic/versions/", "\\.venv/"]
+
+[[tool.mypy.overrides]]
+module = ["celery.*", "kombu.*", "pgserver.*", "fakeredis.*", "asyncpg.*"]
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = ["app.workers.tasks"]
+disallow_untyped_decorators = false  # Celery's decorators are untyped
+
+[[tool.mypy.overrides]]
+module = ["tests.*"]
+disallow_untyped_defs = false
+disallow_incomplete_defs = false
+disallow_untyped_decorators = false
